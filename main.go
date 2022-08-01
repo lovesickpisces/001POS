@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-type employee struct {
-	name        string
-	pin         string
-	displayName string
-	phoneNumber string
-	clockIn     time.Time
-	clockout    time.Time
-}
+// type employee struct {
+// 	name        string
+// 	pin         string
+// 	displayName string
+// 	phoneNumber string
+// 	clockIn     time.Time
+// 	clockout    time.Time
+// }
 
 func findEmployee(employeePin string) {
 	infile, err := os.Open("Employee.csv")
@@ -35,7 +35,20 @@ func findEmployee(employeePin string) {
 			log.Fatal(err)
 		}
 		if strings.Compare(employeePin, record[1]) == 0 {
-			logClockIn(record[1] + "," + record[2])
+			reader := bufio.NewReader(os.Stdin)
+			fmt.Printf("do you want to clock in %s? (y/n)", record[2])
+			fmt.Print("-> ")
+			input, _ := reader.ReadString('\n')
+			input = strings.Replace(input, "\n", "", -1)
+			if strings.Compare(input, "y") == 0 {
+				logClockIn(record[1] + "," + record[2])
+				break
+			} else if strings.Compare(input, "n") == 0 {
+				fmt.Println("Okay :)")
+				break
+			} else {
+				break
+			}
 		}
 	}
 }
