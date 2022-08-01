@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+func loadingScreen() {
+	fmt.Printf("\n\n\n\n\n\n\n\n")
+	fmt.Println("\tLucas POS System :)")
+	fmt.Println("-----------------------------------")
+	fmt.Printf("\n\n\n\n\n\n\n\n")
+
+}
 func leaveCheck(input string) {
 	upperInput := strings.ToUpper(input)
 	switch upperInput {
@@ -33,6 +40,13 @@ func clockInPrintout(name string) {
 
 }
 
+// func clockOutPrintout(name string) {
+// 	dt := time.Now()
+// 	fmt.Printf("Username: %s\n", name)
+// 	fmt.Printf("Clocked in at: %s\n", dt.Format(time.RFC822))
+// 	println("hours worked xx/xx-xx/xx : TBA")
+// }
+
 func findEmployee(employeePin string) {
 	infile, err := os.Open("Employee.csv")
 	if err != nil {
@@ -48,6 +62,7 @@ func findEmployee(employeePin string) {
 			log.Fatal(err)
 		}
 		if strings.Compare(employeePin, record[1]) == 0 {
+			//if isClockedIn(employeePin) {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Printf("do you want to clock in %s? (y/n)", record[2])
 			fmt.Print("-> ")
@@ -64,7 +79,11 @@ func findEmployee(employeePin string) {
 				leaveCheck(input)
 				break
 			}
+			//}
 		}
+		//  else {
+		// 	fmt.Printf("do you want to clock out %s? (y/n)", record[2])
+		// }
 	}
 }
 
@@ -72,13 +91,13 @@ func logClockIn(e string) {
 	dt := time.Now()
 	todayDt := dt.Format("2006-01-02")
 	clockInTime := dt.Format("15:04:05")
-	todayDt = todayDt + "-log.txt"
+	todayDt = todayDt + "-log.csv"
 
 	outFile, err := os.OpenFile(todayDt, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if _, err := outFile.Write([]byte(e + "," + clockInTime + "\n")); err != nil {
+	if _, err := outFile.Write([]byte(e + "," + clockInTime + ",Clocked IN" + "\n")); err != nil {
 		outFile.Close()
 		log.Fatal(err)
 	}
@@ -87,10 +106,34 @@ func logClockIn(e string) {
 	}
 }
 
+func isClockedIn(emloyeePin string) bool {
+	dt := time.Now()
+	todayDt := dt.Format("2006-01-02")
+	todayDt = todayDt + "-log.csv"
+	infile, err := os.Open(todayDt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	employeeCSV := csv.NewReader(infile)
+	for {
+		record, err := employeeCSV.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		if strings.Compare(emloyeePin, record[0]) == 0 {
+			return false
+		}
+
+	}
+	return true
+}
+
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Lucas POS System :)")
-	fmt.Println("--------------------")
+	loadingScreen()
 	for {
 		fmt.Print("-> ")
 		input, _ := reader.ReadString('\n')
