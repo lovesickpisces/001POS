@@ -27,7 +27,7 @@ func loadingScreen() {
 	fmt.Println("----------------------------------------")
 	fmt.Printf("\n\n\n\n\n\n")
 }
-func leaveCheck(input string) {
+func leaveCheck(input string) bool {
 	upperInput := strings.ToUpper(input)
 	switch upperInput {
 	case "Q":
@@ -38,7 +38,12 @@ func leaveCheck(input string) {
 		os.Exit(0)
 	case "EXIT":
 		os.Exit(0)
+	case "B":
+		return false
+	case "BACK":
+		return false
 	}
+	return true
 }
 
 func clockInPrintout(employee EmployeeShift) {
@@ -50,25 +55,17 @@ func clockInPrintout(employee EmployeeShift) {
 	fmt.Printf("Job: \t\t\t%s\n", employee.job)
 	fmt.Printf("\n")
 	fmt.Println("----------------------------------------")
+	fmt.Printf("\nPress 'Enter/Return' to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
-func findEmployee(employeePin string) {
-	/* We start by looking for the Employee.csv file,
-	 * and then we check to make sure the file was
-	 * found and that everything is working				*/
+func clockInEmployee(employeePin string) {
+
 	infile, err := os.Open("Employee.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	/* Here we read in the file as a *csv.Reader 		*/
 	employeeCSV := csv.NewReader(infile)
-
-	/* This is where we begin to go line by line
-	 * Looking through a string[] of each word,
-	 * we also check to make sure it isnt reading
-	 * past the end of file and make sure there
-	 * arent any errors :)							*/
 	for {
 		record, err := employeeCSV.Read()
 		if err == io.EOF {
@@ -77,46 +74,10 @@ func findEmployee(employeePin string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		/* Here we compare the employee pin that is
-		 * given (employeePin) and compare it with the
-		 * list of pins in Employee.csv					*/
 		if strings.Compare(employeePin, record[1]) == 0 {
-
-			/* Now we read in if the user wants to clock
-			 * in (or out).								*/
-			input := getFeedback("do you want to clock in " + record[2] + " (y/n)")
-
-			/* If the User wants to clock in we initalize
-			 * 'e' as an EmployeeShift  type and fill it
-			 * with the necessary information. Then we
-			 * store the employee while they are clocked
-			 * in and give the user a clock in printout.*/
+			input := getFeedback("do you want to clock in "+record[2]+" (y/n)", "type (b) to go back")
 			if strings.Compare(input, "y") == 0 {
-
-				/* Here is the jobs part*/
-				count := 1
-				jobsList := getEmployeeJobs(employeePin)
-				jobInput := getFeedback("Please type the number of the job you are working today")
-				var employeeJob string
-				if strings.Compare(jobInput, "") != 0 {
-					for i := 0; i < 7; i++ {
-						if strings.Compare(jobsList[i], "n") == 0 {
-							i++
-						} else {
-							jobInputInt, err := strconv.Atoi(jobInput)
-							if err != nil {
-								log.Fatal(err)
-							} else if count == jobInputInt {
-								employeeJob = jobsList[i]
-							}
-							count++
-						}
-					}
-				}
-				var employee = logClockIn(record[0], record[1], record[2], employeeJob)
-				clockInPrintout(employee)
-				break
+				employeeJob(employeePin, record[0], record[2])
 			} else if strings.Compare(input, "n") == 0 {
 				fmt.Println("Okay :)")
 				break
@@ -124,17 +85,52 @@ func findEmployee(employeePin string) {
 		}
 	}
 }
+func employeeJob(employeePin, name, username string) {
+	count := 0
+	jobsList := getEmployeeJobs(employeePin)
+	jobInput := getFeedback("Please type the number of the job you are working today", "Type (b) to go back")
+	if !leaveCheck(jobInput) {
+		return
+	}
+	jobInputInt, err := strconv.Atoi(jobInput)
+	if err != nil {
+		isNotJob()
+		return
+	}
+	employeeJob := ""
+	if strings.Compare(jobInput, "") != 0 {
+		for i := 0; i < 7; i++ {
+			if strings.Compare(jobsList[i], "n") == 0 {
+				i++
+			} else {
+				count++
+				if count == jobInputInt {
+					employeeJob = jobsList[i]
+				}
+			}
+		}
+	}
+	if employeeJob == "" {
+		isNotJob()
+		return
+	}
+	var employee = logClockIn(name, employeePin, username, employeeJob)
+	clockInPrintout(employee)
 
+}
+func isNotJob() {
+	fmt.Printf("\n\n\n----------------------------------------\n")
+	fmt.Printf("\tThis job is not listed.\n")
+	fmt.Printf("----------------------------------------\n\n\n")
+	fmt.Printf("\nPress 'Enter/Return' to continue...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
 func getDailyLog() string {
 	todayDt := time.Now().Format("2006-01-02")
 	todayDt = "dailyLogs/" + todayDt + "-log.csv"
 	return todayDt
 }
 func logClockIn(newName, newPin, newUser, employeeJob string) EmployeeShift {
-
-	/* This starts off pretty simple with getting the
-	 * log file name  then filling up the variable
-	 * 'employee' of type EmployeeShift. 				*/
 	dt := time.Now()
 	filename := getDailyLog()
 	employee := EmployeeShift{
@@ -145,17 +141,10 @@ func logClockIn(newName, newPin, newUser, employeeJob string) EmployeeShift {
 		clockIn:  dt,          // time.Time
 		job:      employeeJob, // String
 	}
-
-	/* We check if the log file exists or need to create
-	 * a new log file.				 					*/
 	outFile, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	/* We write pin,username,hh:mm:ss,clockIn/clockOut
-	 * into the log file. The pin is going to be used as
-	 * A key later which is why we aere logging it here	*/
 	employeeInfo := employee.pin + "," + employee.username +
 		"," + employee.clockIn.Format("15:04:05") + ",Clocked IN" + "," + employee.job + "\n"
 
@@ -169,11 +158,6 @@ func logClockIn(newName, newPin, newUser, employeeJob string) EmployeeShift {
 	return employee
 }
 func getEmployeeJobs(employeePin string) [7]string {
-
-	/* This begins with us setting up an array to be
-	 * returned and an array with the strings to assign
-	 * later to the returned array . There is also a
-	 * Count used to keep track of how many to list		*/
 	var returnedJobs [7]string
 	var jobs [7]string
 	jobs[0] = "Manager"
@@ -184,17 +168,12 @@ func getEmployeeJobs(employeePin string) [7]string {
 	jobs[5] = "Salary Kitchen"
 	jobs[6] = "FOH Support"
 	count := 0
-
-	/* Here we access the jobs.csv file that keeps track
-	 * who has what job. 								*/
 	infile, err := os.Open("jobs.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	/* Kind of just repeating what we did to go through
-	 * CSVs in the other functions						*/
 	jobsCSV := csv.NewReader(infile)
+	fmt.Println("\n----------------------------------------")
 	for {
 		record, err := jobsCSV.Read()
 		if err == io.EOF {
@@ -204,7 +183,6 @@ func getEmployeeJobs(employeePin string) [7]string {
 			log.Fatal(err)
 		}
 		if strings.Compare(employeePin, record[0]) == 0 {
-			fmt.Println()
 			for i := 2; i <= 8; i++ {
 				if strings.Compare(record[i], "y") == 0 {
 					fmt.Printf("(%d) %s \n", count+1, jobs[i-2])
@@ -212,35 +190,36 @@ func getEmployeeJobs(employeePin string) [7]string {
 					count++
 				} else {
 					returnedJobs[i-2] = "n"
-					// count++
 				}
 			}
 			break
 		}
 	}
+	fmt.Println("----------------------------------------")
 	return returnedJobs
 }
-
-/*														*/
-/* This function just helps minamize the amount of times
- * You need to check input and everything :)			*/
-func getFeedback(prompt string) string {
+func getFeedback(prompt, prompt2 string) string {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("\nType (q) to quit.\n")
-	fmt.Printf("%s\n", prompt)
+	fmt.Print("\nType (q) to quit this program.\n")
+	if strings.Compare("", prompt2) == 0 {
+		fmt.Printf("%s\n", prompt)
+	} else {
+		fmt.Printf("%s\n", prompt2)
+		fmt.Printf("%s\n", prompt)
+	}
 	fmt.Print("-> ")
 	input, _ := reader.ReadString('\n')
 	input = strings.Replace(input, "\n", "", -1)
-	leaveCheck(input)
 	return input
 }
 
 func main() {
-	loadingScreen()
 	for {
-		input := getFeedback("Enter an employee pin to clock in/out")
+		loadingScreen()
+		input := getFeedback("Enter an employee pin to clock in/out", "")
+		leaveCheck(input)
 		if strings.Compare(input, "") != 0 {
-			findEmployee(input)
+			clockInEmployee(input)
 		}
 	}
 }
