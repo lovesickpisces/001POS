@@ -21,6 +21,19 @@ type EmployeeShift struct {
 	clockIn  time.Time
 	job      string
 }
+type Employee struct {
+	shift       EmployeeShift
+	phone       float32
+	jobs        [7]string
+	personalLog DailyLog
+}
+type DailyLog struct {
+	pin      float32
+	user     string
+	clockIn  time.Time
+	clockOut time.Time
+	job      string
+}
 
 //Pretty printouts and responses go here
 func loadingScreen() {
@@ -293,6 +306,33 @@ func isClockedIn(employeePin string) bool {
 	}
 	return clockInStatus
 }
+
+// Todo list:
+/*
+func createEmployee() Employee {
+
+}
+*/
+/*
+func fetchEmployee() Employee {
+
+}
+*/
+/*
+func storeEmployee(e Employee) {
+
+}
+*/
+/*
+func updateEmployee(e Employee) {
+
+}
+*/
+/*
+getDailyLog() DailyLog {
+
+}
+*/
 
 func main() {
 	for {
