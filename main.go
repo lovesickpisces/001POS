@@ -42,24 +42,6 @@ func loadingScreen() {
 	fmt.Println("----------------------------------------")
 	fmt.Printf("\n\n\n\n\n\n")
 }
-func leaveCheck(input string) bool {
-	upperInput := strings.ToUpper(input)
-	switch upperInput {
-	case "Q":
-		os.Exit(0)
-	case "QUIT":
-		os.Exit(0)
-	case "E":
-		os.Exit(0)
-	case "EXIT":
-		os.Exit(0)
-	case "B":
-		return false
-	case "BACK":
-		return false
-	}
-	return true
-}
 func clockInPrintout(employee EmployeeShift) {
 	fmt.Printf("\n\n\n")
 	fmt.Println("\tEmployee Clock In")
@@ -93,6 +75,24 @@ func printBadInput(prompt string) {
 }
 
 // Tools go here (or the 'get' funtions section)
+func leaveCheck(input string) bool {
+	upperInput := strings.ToUpper(input)
+	switch upperInput {
+	case "Q":
+		os.Exit(0)
+	case "QUIT":
+		os.Exit(0)
+	case "E":
+		os.Exit(0)
+	case "EXIT":
+		os.Exit(0)
+	case "B":
+		return false
+	case "BACK":
+		return false
+	}
+	return true
+}
 func getDailyLog() string {
 	todayDt := time.Now().Format("2006-01-02")
 	todayDt = "dailyLogs/" + todayDt + "-log.csv"
@@ -112,7 +112,7 @@ func getFeedback(prompt, prompt2 string) string {
 	input = strings.Replace(input, "\n", "", -1)
 	return input
 }
-func getEmployeeShift(newName, newPin, newUser, employeeJob string) EmployeeShift {
+func CreateEmployeeShift(newName, newPin, newUser, employeeJob string) EmployeeShift {
 	dt := time.Now()
 	employee := EmployeeShift{
 		pin:      newPin,      // String
@@ -224,7 +224,7 @@ func clockInEmployee(employeePin string) {
 				input := getFeedback("do you want to clock out "+record[2]+" (y/n)", "type (b) to go back")
 				leaveCheck(input)
 				if strings.Compare(input, "y") == 0 {
-					employee := getEmployeeShift(record[0], record[1], record[2], "job")
+					employee := CreateEmployeeShift(record[0], record[1], record[2], "job")
 					logClockOut(employee)
 					clockOutPrintout(employee)
 
@@ -277,7 +277,7 @@ func employeeClockInJob(employeePin, name, username string) {
 		return
 	}
 
-	employee := getEmployeeShift(name, employeePin, username, thisEmployeeJob)
+	employee := CreateEmployeeShift(name, employeePin, username, thisEmployeeJob)
 	logClockIn(employee)
 	clockInPrintout(employee)
 }
