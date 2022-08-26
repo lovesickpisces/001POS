@@ -35,7 +35,7 @@ type DailyLog struct {
 	job      string
 }
 
-//Pretty printouts and responses go here
+// Printouts
 func loadingScreen() {
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 	fmt.Println("\tLucas POS System :)")
@@ -74,7 +74,7 @@ func printBadInput(prompt string) {
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
-// Tools go here (or the 'get' funtions section)
+// Tools
 func leaveCheck(input string) bool {
 	upperInput := strings.ToUpper(input)
 	switch upperInput {
@@ -98,14 +98,14 @@ func getDailyLog() string {
 	todayDt = "dailyLogs/" + todayDt + "-log.csv"
 	return todayDt
 }
-func getFeedback(prompt, prompt2 string) string {
+func getFeedback(prompt1, prompt2 string) string {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("\nType (q) to quit this program.\n")
 	if strings.Compare("", prompt2) == 0 {
-		fmt.Printf("%s\n", prompt)
+		fmt.Printf("%s\n", prompt1)
 	} else {
 		fmt.Printf("%s\n", prompt2)
-		fmt.Printf("%s\n", prompt)
+		fmt.Printf("%s\n", prompt1)
 	}
 	fmt.Print("-> ")
 	input, _ := reader.ReadString('\n')
@@ -309,6 +309,10 @@ func isClockedIn(employeePin string) bool {
 
 // Todo list:
 /*
+func hash(key string) string {
+}
+*/
+/*
 func createEmployee() Employee {
 
 }
@@ -335,6 +339,7 @@ getDailyLog() DailyLog {
 */
 
 func main() {
+	//clockedInEmployees := make(map[string]Employee)
 	for {
 		loadingScreen()
 		input := getFeedback("Enter an employee pin to clock in/out", "")
