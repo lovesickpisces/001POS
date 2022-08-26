@@ -1,3 +1,15 @@
+package tools
+
+import (
+	"bufio"
+	"encoding/csv"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+	"time"
+)
 
 // Tools
 func leaveCheck(input string) bool {
