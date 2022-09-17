@@ -9,7 +9,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	tools "timekeeping/tools"
+
+	tools "github.com/lovesickpisces/001POS/TimeKeeping/"
 )
 
 // Printouts
