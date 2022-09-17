@@ -1,3 +1,3 @@
-module github.com/lovesickpisces/001POS
+module timekeeping
 
 go 1.18
