@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,9 @@ import (
 	"strings"
 	tools "timekeeping/tools"
 )
+
+//global map to store employees :)
+var clockedInEmployees = make(map[string]tools.EmployeeShift)
 
 // Printouts
 func loadingScreen() {
@@ -50,7 +54,6 @@ func printBadInput(prompt string) {
 	fmt.Printf("\nPress 'Enter/Return' to continue...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
-
 func clockInEmployee(employeePin string) {
 
 	infile, err := os.Open("../docs/Employee.csv")
@@ -66,16 +69,18 @@ func clockInEmployee(employeePin string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		//clockedInCheck := false
 		if strings.Compare(employeePin, record[1]) == 0 {
-			if isClockedIn(employeePin) {
-				input := tools.GetFeedback("do you want to clock out "+record[2]+" (y/n)", "type (b) to go back")
-				tools.LeaveCheck(input)
+			clockedInEmployee, clockedIn := fetchEmployeeShift(employeePin)
+			if clockedIn == nil {
+				input := tools.GetFeedback("do you want to clock out "+clockedInEmployee.Username+" (y/n)", "type (b) to go back")
+				if !tools.LeaveCheck(input) {
+					break
+				}
 				if strings.Compare(input, "y") == 0 {
-					employee := tools.CreateEmployeeShift(record[0], record[1], record[2], "job")
-					tools.LogClockOut(employee)
-					clockOutPrintout(employee)
-
+					//employee := tools.CreateEmployeeShift(record[0], record[1], record[2], "job")
+					tools.LogClockOut(clockedInEmployee)
+					clockOutPrintout(clockedInEmployee)
+					removeEmployeeShift(employeePin)
 					//getClockOut(employeePin)
 				} else if strings.Compare(input, "n") == 0 {
 					fmt.Println("Okay :)")
@@ -84,9 +89,19 @@ func clockInEmployee(employeePin string) {
 
 			} else {
 				input := tools.GetFeedback("do you want to clock in "+record[2]+" (y/n)", "type (b) to go back")
-				tools.LeaveCheck(input)
+				if !tools.LeaveCheck(input) {
+					break
+				}
 				if strings.Compare(input, "y") == 0 {
-					employeeClockInJob(employeePin, record[0], record[2])
+					employeejob, noJobError := employeeClockInJob(employeePin)
+					if noJobError == nil {
+						employee := tools.CreateEmployeeShift(record[0], employeePin, record[2], employeejob)
+						tools.LogClockIn(employee)
+						storeEmployeeShift(employee)
+						clockInPrintout(employee)
+					} else {
+						break
+					}
 				} else if strings.Compare(input, "n") == 0 {
 					fmt.Println("Okay :)")
 					break
@@ -95,86 +110,56 @@ func clockInEmployee(employeePin string) {
 		}
 	}
 }
-func employeeClockInJob(employeePin, name, username string) {
+func employeeClockInJob(employeePin string) (jobReturn string, err error) {
 	count := 0
 	jobsList := tools.GetEmployeeJobs(employeePin)
 	jobInput := tools.GetFeedback("Please type the number of the job you are working today", "Type (b) to go back")
 	if !tools.LeaveCheck(jobInput) {
-		return
+		return "", errors.New("left function to go back")
 	}
+	thisEmployeeJob := ""
 	jobInputInt, err := strconv.Atoi(jobInput)
 	if err != nil {
 		printBadInput("\tThis job is not listed.\n")
-		return
-	}
-	thisEmployeeJob := ""
-	if strings.Compare(jobInput, "") != 0 {
-		for i := 0; i < 7; i++ {
-			if strings.Compare(jobsList[i], "n") == 0 {
-				i++
-			} else {
-				count++
-				if count == jobInputInt {
-					thisEmployeeJob = jobsList[i]
+	} else {
+		if strings.Compare(jobInput, "") != 0 {
+			for i := 0; i < 7; i++ {
+				if strings.Compare(jobsList[i], "n") == 0 {
+					i++
+				} else {
+					count++
+					if count == jobInputInt {
+						thisEmployeeJob = jobsList[i]
+					}
 				}
 			}
 		}
 	}
 	if thisEmployeeJob == "" {
 		printBadInput("\tThis job is not listed.\n")
-		return
+		return "", errors.New("picked a job that doesnt exist for this employee")
 	}
 
-	employee := tools.CreateEmployeeShift(name, employeePin, username, thisEmployeeJob)
-	tools.LogClockIn(employee)
-	clockInPrintout(employee)
-}
-
-// questionable...
-func isClockedIn(employeePin string) bool {
-	var clockInStatus bool
-	filename := tools.GetDailyLog()
-	infile, err := os.Open(filename)
-	if err != nil {
-		return false
-	}
-	logCSV := csv.NewReader(infile)
-	for {
-		record, err := logCSV.Read()
-		if err == io.EOF {
-			break
-		}
-		if strings.Compare(employeePin, record[0]) == 0 {
-			if strings.Compare(record[3], "Clocked IN") == 0 {
-				clockInStatus = true
-			} else if strings.Compare(record[3], "Clocked OUT") == 0 {
-				clockInStatus = false
-			}
-		}
-	}
-	return clockInStatus
+	return thisEmployeeJob, nil
 }
 
 // Todo list:
-/*
-func hash(key string) string {
+func fetchEmployeeShift(key string) (eReturn tools.EmployeeShift, err error) {
+	var e tools.EmployeeShift
+	e, prs := clockedInEmployees[key]
+	if prs {
+		return e, nil
+	} else {
+		return e, errors.New("unable to find in map with given key")
+	}
 }
-*/
-/*
-func createEmployee() Employee {
+func storeEmployeeShift(e tools.EmployeeShift) {
+	clockedInEmployees[e.Pin] = e
+}
+func removeEmployeeShift(pin string) {
+	delete(clockedInEmployees, pin)
+}
 
-}
-*/
-/*
-func fetchEmployee() Employee {
-
-}
-*/
-/*
-func storeEmployee(e Employee) {
-
-}
-*/
 /*
 func updateEmployee(e Employee) {
 
@@ -187,7 +172,6 @@ getDailyLog() DailyLog {
 */
 
 func main() {
-	//clockedInEmployees := make(map[string]Employee)
 	for {
 		loadingScreen()
 		input := tools.GetFeedback("Enter an employee pin to clock in/out", "")
