@@ -148,13 +148,15 @@ func LogClockIn(employee EmployeeShift) {
 	}
 }
 func LogClockOut(employee EmployeeShift) {
+
 	filename := GetDailyLog()
 	outFile, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	employeeInfo := employee.Pin + "," + employee.Username +
-		"," + employee.ClockIn.Format("15:04:05") + ",Clocked Out" + "," + employee.Job + "\n"
+		"," + time.Now().Format("15:04:05") + ",Clocked Out," + "," + employee.Job + "\n"
 
 	if _, err := outFile.Write([]byte(employeeInfo)); err != nil {
 		outFile.Close()

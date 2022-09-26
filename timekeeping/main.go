@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 	tools "timekeeping/tools"
 )
 
@@ -20,30 +21,35 @@ var clockedInEmployees = make(map[string]tools.EmployeeShift)
 func loadingScreen() {
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 	fmt.Println("\tLucas POS System :)")
-	fmt.Println("----------------------------------------")
+	fmt.Println("-------------------------------------------")
 	fmt.Printf("\n\n\n\n\n\n")
 }
 func clockInPrintout(employee tools.EmployeeShift) {
 	fmt.Printf("\n\n\n")
 	fmt.Println("\tEmployee Clock In")
-	fmt.Println("----------------------------------------")
-	fmt.Printf("Username: %s\t%s\n", employee.Username, employee.ClockIn.Format("January 2, 2006"))
-	fmt.Printf("\nClocked in at: \t\t%s\n", employee.ClockIn.Format("3:04:05 PM"))
+	fmt.Println("-------------------------------------------")
+	fmt.Printf("Username: \t\t%s\n", employee.Username)
+	fmt.Printf("Date: \t\t\t%s\n", employee.ClockIn.Format("January 2, 2006"))
+	fmt.Printf("Clocked in at: \t\t%s\n", employee.ClockIn.Format("3:04:05 PM"))
 	fmt.Printf("Job: \t\t\t%s\n", employee.Job)
-	fmt.Printf("\n")
-	fmt.Println("----------------------------------------")
-	fmt.Printf("\nPress 'Enter/Return' to continue...")
+	fmt.Println("-------------------------------------------")
+	fmt.Printf("Press 'Enter/Return' to continue...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 func clockOutPrintout(employee tools.EmployeeShift) {
+	currTime := time.Now()
 	fmt.Printf("\n\n\n")
 	fmt.Println("\tEmployee Clock out")
-	fmt.Println("----------------------------------------")
-	fmt.Printf("Username: %s\t%s\n", employee.Username, employee.ClockIn.Format("January 2, 2006"))
-	fmt.Printf("\nClocked out at: \t\t%s\n", employee.ClockIn.Format("3:04:05 PM"))
+	fmt.Println("-------------------------------------------")
+	fmt.Printf("Username: \t\t%s\n", employee.Username)
+	fmt.Printf("Date: \t\t\t%s\n", employee.ClockIn.Format("January 2, 2006"))
+	fmt.Printf("Clock in: \t\t%s\n", employee.ClockIn.Format("3:04:05 PM"))
+	fmt.Printf("Clock out: \t\t%s\n", currTime.Format("3:04:05 PM"))
+	diff := currTime.Sub(employee.ClockIn)
+	shiftTime := time.Time{}.Add(diff)
+	fmt.Println("Shift Hours:\t\t", shiftTime.Format("15:04:05"))
 	fmt.Printf("Job: \t\t\t%s\n", employee.Job)
-	fmt.Printf("\n")
-	fmt.Println("----------------------------------------")
+	fmt.Println("-------------------------------------------")
 	fmt.Printf("\nPress 'Enter/Return' to continue...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
@@ -142,8 +148,6 @@ func employeeClockInJob(employeePin string) (jobReturn string, err error) {
 
 	return thisEmployeeJob, nil
 }
-
-// Todo list:
 func fetchEmployeeShift(key string) (eReturn tools.EmployeeShift, err error) {
 	var e tools.EmployeeShift
 	e, prs := clockedInEmployees[key]
@@ -159,17 +163,6 @@ func storeEmployeeShift(e tools.EmployeeShift) {
 func removeEmployeeShift(pin string) {
 	delete(clockedInEmployees, pin)
 }
-
-/*
-func updateEmployee(e Employee) {
-
-}
-*/
-/*
-getDailyLog() DailyLog {
-
-}
-*/
 
 func main() {
 	for {
