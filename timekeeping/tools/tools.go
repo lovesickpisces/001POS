@@ -26,7 +26,7 @@ type Employee struct {
 	PersonalLog DailyLog
 }
 type DailyLog struct {
-	Pin      float32
+	Pin      string
 	User     string
 	ClockIn  time.Time
 	ClockOut time.Time
@@ -53,7 +53,6 @@ func LeaveCheck(input string) bool {
 	return true
 }
 
-/* changed */
 func GetDailyLog() string {
 	todayDt := time.Now().Format("2006-01-02")
 	todayDt = "../docs/dailyLogs/" + todayDt + "-log.csv"
@@ -61,13 +60,13 @@ func GetDailyLog() string {
 }
 func GetFeedback(prompt1, prompt2 string) string {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("\nType (q) to quit this program.\n")
 	if strings.Compare("", prompt2) == 0 {
 		fmt.Printf("%s\n", prompt1)
 	} else {
 		fmt.Printf("%s\n", prompt2)
 		fmt.Printf("%s\n", prompt1)
 	}
+	fmt.Print("(q) to quit this program.\n")
 	fmt.Print("-> ")
 	input, _ := reader.ReadString('\n')
 	input = strings.Replace(input, "\n", "", -1)
@@ -85,8 +84,6 @@ func CreateEmployeeShift(newName, newPin, newUser, employeeJob string) EmployeeS
 	}
 	return employee
 }
-
-/* changed */
 func GetEmployeeJobs(employeePin string) [7]string {
 	var returnedJobs [7]string
 	var jobs [7]string
@@ -128,16 +125,14 @@ func GetEmployeeJobs(employeePin string) [7]string {
 	fmt.Println("----------------------------------------")
 	return returnedJobs
 }
-
-// functions for logging employee information
-func LogClockIn(employee EmployeeShift) {
+func LogClockIn(dl DailyLog) {
 	filename := GetDailyLog()
 	outFile, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
-	employeeInfo := employee.Pin + "," + employee.Username +
-		"," + employee.ClockIn.Format("15:04:05") + ",Clocked IN" + "," + employee.Job + "\n"
+	employeeInfo := dl.Pin + "," + dl.User +
+		"," + dl.ClockIn.Format("15:04:05") + ",Clocked IN" + "," + dl.Job + "\n"
 
 	if _, err := outFile.Write([]byte(employeeInfo)); err != nil {
 		outFile.Close()
@@ -147,7 +142,18 @@ func LogClockIn(employee EmployeeShift) {
 		log.Fatal(err)
 	}
 }
-func LogClockOut(employee EmployeeShift) {
+func CreateDailyLog(employee EmployeeShift) DailyLog {
+	dt := time.Now()
+	dl := DailyLog{
+		Pin:      employee.Pin,
+		User:     employee.Username,
+		ClockIn:  dt,
+		ClockOut: dt,
+		Job:      employee.Job,
+	}
+	return dl
+}
+func LogClockOut(dl DailyLog) {
 
 	filename := GetDailyLog()
 	outFile, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -155,14 +161,24 @@ func LogClockOut(employee EmployeeShift) {
 		log.Fatal(err)
 	}
 
-	employeeInfo := employee.Pin + "," + employee.Username +
-		"," + time.Now().Format("15:04:05") + ",Clocked Out," + "," + employee.Job + "\n"
+	employeeInfo := dl.Pin + "," + dl.User +
+		"," + dl.ClockIn.Format("15:04:05") + "," + time.Now().Format("15:04:05") + ",Clocked Out," + dl.Job + "\n"
 
 	if _, err := outFile.Write([]byte(employeeInfo)); err != nil {
 		outFile.Close()
 		log.Fatal(err)
 	}
 	if err := outFile.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+func ClearLog() {
+	filename := GetDailyLog()
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
